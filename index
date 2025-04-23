@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainstorming Raum (Offline)</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #7952b3;
+            --primary-light: #9d74d2;
+            --secondary: #61dafb;
+            --dark: #2c3e50;
+            --light: #f8f9fa;
+            --success: #4bdb6a;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --table1: #8e44ad;
+            --table2: #3498db;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #2c3e50;
+            color: var(--light);
+            overflow: hidden;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        #room {
+            position: relative;
+            width: 900px;
+            height: 600px;
+            background-color: #34495e;
+            margin: 30px auto;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+            border: 4px solid #1a252f;
+        }
+        
+        .table {
+            position: absolute;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+            z-index: 5;
+        }
+        
+        .table:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.4);
+        }
+        
+        #table1 {
+            top: 150px;
+            left: 200px;
+            background: radial-gradient(circle at 30% 30%, var(--table1), #6c3483);
+        }
+        
+        #table2 {
+            top: 150px;
+            right: 200px;
+            background: radial-gradient(circle at 30% 30%, var(--table2), #2980b9);
+        }
+        
+        #player {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            transition: left 0.1s, top 0.1s;
+            border: 3px solid white;
+        }
+        
+        .highlight-zone {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background-color: rgba(76, 175, 80, 0.08);
+            border: 2px dashed rgba(76, 175, 80, 0.4);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 2;
+            display: none;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.5;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.05);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.5;
+            }
+        }
+        
+        #controls-info {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background-color: rgba(0,0,0,0.6);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 50;
+        }
+        
+        #brainstorm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        #brainstorm-content {
+            background-color: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 30px;
+            position: relative;
+            color: var(--dark);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+            animation: modalFadeIn 0.3s ease;
+        }
+        
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        #close-brainstorm {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        #close-brainstorm:hover {
+            transform: scale(1.1);
+            background-color: #c0392b;
+        }
+        
+        .brainstorm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .table-title {
+            font-size: 28px;
+            color: var(--dark);
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .table-status {
+            font-size: 14px;
+            color: #666;
+            background-color: #f5f5f5;
+            padding: 5px 12px;
+            border-radius: 50px;
+        }
+        
+        .seats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        
+        .seat {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #555;
+            border: 2px solid #ddd;
+        }
+        
+        .seat:hover {
+            transform: translateY(-5px);
+            background-color: #e5e5e5;
+        }
+        
+        .seat.occupied {
+            background-color: var(--success);
+            color: white;
+            border-color: #3db049;
+        }
+        
+        .seat-tooltip {
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 12px;
+            background-color: var(--dark);
+            color: white;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            display: none;
+            z-index: 5;
+            font-weight: 400;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+        
+        .seat-tooltip:after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--dark) transparent transparent transparent;
+        }
+        
+        .seat:hover .seat-tooltip {
+            display: block;
+        }
+        
+        .brainstorm-area {
+            border: 1px solid #e5e5e5;
+            border-radius: 15px;
+            padding: 25px;
+            background-color: #f9f9f9;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .brainstorm-area h3 {
+            margin-top: 0;
+            color: var(--dark);
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        
+        .brainstorm-area h3:after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: var(--primary);
+            border-radius: 3px;
+        }
+        
+        .players-list {
+            margin: 20px 0;
+            font-size: 14px;
+            color: #666;
+            background-color: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .idea-input {
+            display: flex;
+            margin: 20px 0;
+        }
+        
+        .idea-input input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px 0 0 8px;
+            font-size: 14px;
+            font-family: 'Poppins', sans-serif;
+            transition: border 0.3s ease;
+            outline: none;
+        }
+        
+        .idea-input input:focus {
+            border-color: var(--primary);
+        }
+        
+        .idea-input input:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+        }
+        
+        .idea-input button {
+            padding: 12px 20px;
+            background-color: var(--success);
+            color: white;
+            border: none;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .idea-input button:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+        
+        .idea-input button:disabled {
+            background-color: #a5d6ae;
+            cursor: not-allowed;
+        }
+        
+        .ideas-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 15px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 10px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .ideas-list li {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+        
+        .ideas-list li:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .ideas-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .idea-votes {
+            font-size: 12px;
+            color: #777;
+            background-color: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 50px;
+            margin-left: 10px;
+        }
+        
+        .author {
+            font-weight: 600;
+            color: var(--primary);
+            margin-right: 5px;
+        }
+        
+        .login-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+        
+        .login-form {
+            background-color: white;
+            padding: 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            animation: bounceIn 0.5s;
+        }
+        
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            70% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        .login-form h2 {
+            margin-top: 0;
+            color: var(--dark);
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        
+        .login-form input {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 25px 0;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s;
+            outline: none;
+        }
+        
+        .login-form input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(121, 82, 179, 0.1);
+        }
+        
+        .login-form button {
+            padding: 15px 25px;
+            background: linear-gradient(45deg, var(--primary), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(121, 82, 179, 0.3);
+        }
+        
+        .login-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(121, 82, 179, 0.4);
+        }
+        
+        .other-player {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            z-index: 5;
+            border: 3px solid white;
+        }
+        
+        /* Button styles */
+        .action-btn {
+            background-color: transparent;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 5px;
+        }
+        
+        .vote-btn {
+            background-color: var(--primary);
+        }
+        
+        .vote-btn:hover {
+            background-color: #6441a5;
+            transform: scale(1.1);
+        }
+        
+        .delete-btn {
+            background-color: var(--danger);
+        }
+        
+        .delete-btn:hover {
+            background-color: #c0392b;
+            transform: scale(1.1);
+        }
+        
+        /* Interact hint */
+        .interact-hint {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            background-color: rgba(0,0,0,0.6);
+            color: white;
+            border-radius: 50px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            backdrop-filter: blur(5px);
+            z-index: 50;
+            pointer-events: none;
+        }
+        
+        .interact-hint.visible {
+            opacity: 1;
+        }
+        
+        /* Share link */
+        #share-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0,0,0,0.6);
+            padding: 10px 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+            z-index: 50;
+            display: none;
+        }
+        
+        #share-link {
+            color: white;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        
+        #copy-link-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        #room-info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0,0,0,0.6);
+            padding: 10px 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+            z-index: 50;
+            color: white;
+            font-size: 14px;
+            display: none;
+        }
+        
+        /* Online indicators */
+        .online-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background-color: var(--success);
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 5px var(--success);
+            animation: pulse-online 2s infinite;
+        }
+        
+        @keyframes pulse-online {
+            0% {
+                box-shadow: 0 0 0 0 rgba(75, 219, 106, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(75, 219, 106, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(75, 219, 106, 0);
+            }
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            max-width: 300px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            transform: translateY(20px);
+            opacity: 0;
+        }
+
+        /* Offline-Modus-Hinweis */
+        .offline-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--warning);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 900;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-badge">
+        <i class="fas fa-wifi"></i> Offline-Modus
+    </div>
+
+    <div id="login-screen" class="login-screen">
+        <div class="login-form">
+            <h2>Willkommen zum Brainstorming-Raum</h2>
+            <input type="text" id="player-name-input" placeholder="Dein Name" maxlength="10">
+            <button id="start-game">
+                <i class="fas fa-sign-in-alt"></i> Raum betreten
+            </button>
+        </div>
+    </div>
+
+    <div id="game-container" style="display: none;">
+        <div class="interact-hint" id="interact-hint">Drücke E, um den Tisch zu betreten</div>
+        
+        <div id="room-info">
+            <span class="online-indicator"></span> 
+            <span id="online-count">1</span> Spieler online in Raum: <span id="room-id">Lokal-Modus</span>
+        </div>
+        
+        <div id="share-container">
+            <span id="share-link"></span>
+            <button id="copy-link-btn">
+                <i class="fas fa-copy"></i> Kopieren
+            </button>
+        </div>
+        
+        <div id="room">
+            <div id="player"></div>
+            
+            <div id="table1" class="table">
+                <span>Tisch 1</span>
+                <div class="highlight-zone" id="highlight-zone-1"></div>
+            </div>
+            
+            <div id="table2" class="table">
+                <span>Tisch 2</span>
+                <div class="highlight-zone" id="highlight-zone-2"></div>
+            </div>
+        </div>
+        
+        <div id="controls-info">
+            <p><i class="fas fa-keyboard"></i> Steuerung: W A S D oder Pfeiltasten</p>
+        </div>
+    </div>
+    
+    <div id="brainstorm-modal">
+        <div id="brainstorm-content">
+            <button id="close-brainstorm"><i class="fas fa-times"></i></button>
+            
+            <div class="brainstorm-header">
+                <h2 class="table-title" id="modal-table-title">Tisch 1</h2>
+                <div class="table-status">
+                    <i class="fas fa-users"></i> <span id="modal-table-count">0</span>/5 Plätze belegt
+                </div>
+            </div>
+            
+            <div class="players-list" id="modal-players-list">
+                <i class="fas fa-info-circle"></i> Niemand sitzt an diesem Tisch.
+            </div>
+            
+            <div class="seats" id="modal-seats">
+                <div class="seat" data-seat="1">
+                    1
+                    <div class="seat-tooltip">Frei</div>
+                </div>
+                <div class="seat" data-seat="2">
+                    2
+                    <div class="seat-tooltip">Frei</div>
+                </div>
+                <div class="seat" data-seat="3">
+                    3
+                    <div class="seat-tooltip">Frei</div>
+                </div>
+                <div class="seat" data-seat="4">
+                    4
+                    <div class="seat-tooltip">Frei</div>
+                </div>
+                <div class="seat" data-seat="5">
+                    5
+                    <div class="seat-tooltip">Frei</div>
+                </div>
+            </div>
+            
+            <div class="brainstorm-area">
+                <h3>Brainstorming-Bereich</h3>
+                <div class="idea-input">
+                    <input type="text" id="idea-input" placeholder="Deine Idee..." disabled>
+                    <button id="add-idea" disabled><i class="fas fa-plus"></i> Hinzufügen</button>
+                </div>
+                <ul class="ideas-list" id="ideas-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Debug-Logs hinzufügen
+        console.log("Script gestartet (Offline-Modus)");
+        
+        // Raumname generieren
+        const roomId = 'offline-' + Math.random().toString(36).substring(2, 9);
+        console.log("Lokale Raum-ID:", roomId);
+        
+        // Spielstatus und Daten
+        let playerName = '';
+        let playerColor = '';
+        let currentTable = null;
+        let currentSeat = null;
+        let playerX = 400;
+        let playerY = 300;
+        let movementEnabled = true;
+        let activeKeys = {};
+        
+        // Keine anderen Spieler im Offline-Modus
+        let otherPlayers = {};
+        
+        // Tabellendaten
+        let tables = {
+            1: {
+                x: 200,
+                y: 150,
+                radius: 70,
+                seats: [null, null, null, null, null],
+                ideas: []
+            },
+            2: {
+                x: 700,
+                y: 150,
+                radius: 70,
+                seats: [null, null, null, null, null],
+                ideas: []
+            }
+        };
+        
+        // Zufällige Farbe für den Spieler generieren
+        function getRandomColor() {
+            const colors = [
+                '#f44336', '#e91e63', '#9c27b0', '#673ab7', 
+                '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4',
+                '#009688', '#4caf50', '#8bc34a', '#cddc39',
+                '#ffc107', '#ff9800', '#ff5722'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        // DOM-Elemente
+        const loginScreen = document.getElementById('login-screen');
+        const gameContainer = document.getElementById('game-container');
+        const playerNameInput = document.getElementById('player-name-input');
+        const startGameButton = document.getElementById('start-game');
+        const playerElement = document.getElementById('player');
+        const roomElement = document.getElementById('room');
+        const brainstormModal = document.getElementById('brainstorm-modal');
+        const closeModalButton = document.getElementById('close-brainstorm');
+        const ideaInput = document.getElementById('idea-input');
+        const addIdeaButton = document.getElementById('add-idea');
+        const ideasList = document.getElementById('ideas-list');
+        const modalTableTitle = document.getElementById('modal-table-title');
+        const modalTableCount = document.getElementById('modal-table-count');
+        const modalPlayersList = document.getElementById('modal-players-list');
+        const modalSeats = document.querySelector('#modal-seats');
+        const tableElements = document.querySelectorAll('.table');
+        const interactHint = document.getElementById('interact-hint');
+        const roomInfoElement = document.getElementById('room-info');
+        const roomIdElement = document.getElementById('room-id');
+        const onlineCountElement = document.getElementById('online-count');
+        const shareContainer = document.getElementById('share-container');
+        const shareLinkElement = document.getElementById('share-link');
+        const copyLinkButton = document.getElementById('copy-link-btn');
+        
+        console.log("DOM-Elemente geladen");
+        
+        // Spiel starten
+        startGameButton.addEventListener('click', () => {
+            console.log("Button wurde geklickt!");
+            const name = playerNameInput.value.trim();
+            if (!name) {
+                alert('Bitte gib einen Namen ein!');
+                return;
+            }
+            
+            console.log("Name eingegeben:", name);
+            playerName = name;
+            playerColor = getRandomColor();
+            
+            loginScreen.style.display = 'none';
+            gameContainer.style.display = 'block';
+            
+            // Spieler-Element initialisieren
+            playerElement.textContent = name.charAt(0).toUpperCase();
+            playerElement.style.backgroundColor = playerColor;
+            playerElement.style.left = playerX + 'px';
+            playerElement.style.top = playerY + 'px';
+            
+            // Rauminformationen anzeigen
+            roomInfoElement.style.display = 'block';
+            
+            // Tastatur-Event-Listener hinzufügen
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('keyup', handleKeyUp);
+            
+            // Starte den Animations-Loop
+            requestAnimationFrame(gameLoop);
+            
+            // Benachrichtigung anzeigen
+            showNotification(`Willkommen im Offline-Modus!`);
+        });
+        
+        // Copy-Link-Button (im Offline-Modus deaktiviert)
+        copyLinkButton.addEventListener('click', () => {
+            showNotification('Link-Teilen ist im Offline-Modus nicht verfügbar.');
+        });
+        
+        // Tasten-Handler
+        function handleKeyDown(e) {
+            if (!movementEnabled) return;
+            
+            // WASD oder Pfeiltasten
+            if (['w', 'a', 's', 'd', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+                activeKeys[e.key.toLowerCase()] = true;
+            }
+            
+            // E-Taste für Interaktion
+            if (e.key.toLowerCase() === 'e') {
+                activeKeys['e'] = true;
+            }
+        }
+        
+        function handleKeyUp(e) {
+            if (['w', 'a', 's', 'd', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'].includes(e.key.toLowerCase())) {
+                activeKeys[e.key.toLowerCase()] = false;
+            }
+            
+            if (e.key.toLowerCase() === 'e') {
+                activeKeys['e'] = false;
+            }
+        }
+        
+        // Hauptspiel-Loop
+        function gameLoop() {
+            if (movementEnabled) {
+                updatePlayerPosition();
+                checkTableProximity();
+            }
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Spielerposition aktualisieren
+        function updatePlayerPosition() {
+            const speed = 3;
+            let dx = 0;
+            let dy = 0;
+            
+            // WASD oder Pfeiltasten
+            if (activeKeys['w'] || activeKeys['arrowup']) dy -= speed;
+            if (activeKeys['a'] || activeKeys['arrowleft']) dx -= speed;
+            if (activeKeys['s'] || activeKeys['arrowdown']) dy += speed;
+            if (activeKeys['d'] || activeKeys['arrowright']) dx += speed;
+            
+            // Diagonale Bewegungen normalisieren
+            if (dx !== 0 && dy !== 0) {
+                dx *= 0.7071; // 1/sqrt(2)
+                dy *= 0.7071;
+            }
+            
+            // Neue Position berechnen
+            let newX = playerX + dx;
+            let newY = playerY + dy;
+            
+            // Grenzen des Raums
+            const minX = 25;
+            const minY = 25;
+            const maxX = roomElement.clientWidth - 25;
+            const maxY = roomElement.clientHeight - 25;
+            
+            // Kollisionserkennung mit Grenzen
+            newX = Math.max(minX, Math.min(newX, maxX));
+            newY = Math.max(minY, Math.min(newY, maxY));
+            
+            // Kollisionserkennung mit Tischen
+            for (const tableId in tables) {
+                const table = tables[tableId];
+                const dx = newX - table.x;
+                const dy = newY - table.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Wenn zu nah am Tisch
+                if (distance < table.radius) {
+                    // Bewegung in Richtung vom Tisch weg
+                    const angle = Math.atan2(dy, dx);
+                    newX = table.x + (table.radius + 5) * Math.cos(angle);
+                    newY = table.y + (table.radius + 5) * Math.sin(angle);
+                }
+            }
+            
+            // Position aktualisieren, wenn sie sich geändert hat
+            if (newX !== playerX || newY !== playerY) {
+                playerX = newX;
+                playerY = newY;
+                playerElement.style.left = playerX + 'px';
+                playerElement.style.top = playerY + 'px';
+            }
+        }
+        
+        // Überprüfen, ob Spieler in der Nähe eines Tisches ist
+        function checkTableProximity() {
+            let nearTable = false;
+            let nearestTableId = null;
+            let nearestDistance = Infinity;
+            
+            for (const tableId in tables) {
+                const table = tables[tableId];
+                const dx = playerX - table.x;
+                const dy = playerY - table.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                const highlightZone = document.getElementById(`highlight-zone-${tableId}`);
+                highlightZone.style.left = table.x + 'px';
+                highlightZone.style.top = table.y + 'px';
+                
+                // Wenn in der Nähe des Tisches
+                if (distance < table.radius + 80) {
+                    highlightZone.style.display = 'block';
+                    nearTable = true;
+                    
+                    if (distance < nearestDistance) {
+                        nearestDistance = distance;
+                        nearestTableId = tableId;
+                    }
+                    
+                    // Wenn sehr nah und E-Taste gedrückt
+                    if (distance < table.radius + 40 && activeKeys['e']) {
+                        openTableModal(parseInt(tableId));
+                        // Kurze Pause, um Mehrfachaktionen zu vermeiden
+                        activeKeys['e'] = false;
+                        setTimeout(() => {
+                            if (activeKeys['e']) activeKeys['e'] = false;
+                        }, 300);
+                    }
+                } else {
+                    highlightZone.style.display = 'none';
+                }
+            }
+            
+            // Hinweis anzeigen, wenn in der Nähe eines Tisches
+            if (nearTable && nearestTableId) {
+                interactHint.textContent = `Drücke E, um Tisch ${nearestTableId} zu betreten`;
+                interactHint.classList.add('visible');
+            } else {
+                interactHint.classList.remove('visible');
+            }
+        }
+        
+        // Tisch-Modal öffnen
+        function openTableModal(tableId) {
+            // Bewegung deaktivieren (im Multiplayer bleibt das Movement aktiv)
+            // movementEnabled = false;
+            
+            // Modal-Titel und aktiven Tisch setzen
+            modalTableTitle.textContent = `Tisch ${tableId}`;
+            currentTable = tableId;
+            
+            // Sitzplätze aktualisieren
+            updateSeats();
+            
+            // Ideen aktualisieren
+            renderIdeas();
+            
+            // Modal anzeigen
+            brainstormModal.style.display = 'flex';
+            
+            // Spielerstatus aktualisieren
+            updatePlayerStatus();
+        }
+        
+        // Tisch-Modal schließen
+        closeModalButton.addEventListener('click', () => {
+            // Wenn der Spieler an einem Platz sitzt, aufstehen
+            if (currentSeat !== null) {
+                // Lokale Anpassungen
+                leaveSeat();
+            }
+            
+            // Modal schließen
+            brainstormModal.style.display = 'none';
+            
+            // Bewegung aktivieren (bleibt hier aktiviert)
+            movementEnabled = true;
+            
+            // Aktuellen Tisch zurücksetzen
+            currentTable = null;
+        });
+        
+        // Sitzplätze aktualisieren
+        function updateSeats() {
+            const seats = modalSeats.querySelectorAll('.seat');
+            const tableSeats = tables[currentTable].seats;
+            
+            seats.forEach((seat, index) => {
+                const seatId = index + 1;
+                const occupied = tableSeats[index] !== null;
+                
+                // Aussehen aktualisieren
+                if (occupied) {
+                    seat.classList.add('occupied');
+                    seat.querySelector('.seat-tooltip').textContent = tableSeats[index];
+                } else {
+                    seat.classList.remove('occupied');
+                    seat.querySelector('.seat-tooltip').textContent = 'Frei';
+                }
+                
+                // Klick-Event
+                seat.onclick = () => {
+                    handleSeatClick(seatId);
+                };
+            });
+        }
+        
+        // Sitzplatz-Klick behandeln
+        function handleSeatClick(seatId) {
+            const tableSeats = tables[currentTable].seats;
+            
+            // Wenn der Spieler bereits an diesem Platz sitzt, aufstehen
+            if (currentSeat === seatId) {
+                // Lokale Anpassungen
+                leaveSeat();
+                return;
+            }
+            
+            // Überprüfen, ob der Platz frei ist
+            if (tableSeats[seatId - 1] !== null) {
+                showNotification('Dieser Platz ist bereits besetzt.');
+                return;
+            }
+            
+            // Wenn der Spieler bereits woanders sitzt, zuerst aufstehen
+            if (currentSeat !== null) {
+                // Lokale Anpassungen
+                leaveSeat();
+            }
+            
+            // Platz einnehmen
+            tableSeats[seatId - 1] = playerName;
+            currentSeat = seatId;
+            
+            // UI aktualisieren
+            updateSeats();
+            updatePlayerStatus();
+            
+            // Eingabefeld aktivieren
+            ideaInput.disabled = false;
+            addIdeaButton.disabled = false;
+            
+            // Benachrichtigung anzeigen
+            showNotification('Du hast Platz ' + seatId + ' eingenommen.');
+        }
+        
+        // Benachrichtigung anzeigen
+        function showNotification(message) {
+            // Prüfen, ob bereits eine Benachrichtigung existiert
+            let notification = document.querySelector('.notification');
+            
+            if (!notification) {
+                // Neue Benachrichtigung erstellen
+                notification = document.createElement('div');
+                notification.className = 'notification';
+                document.body.appendChild(notification);
+                
+                // Animation starten
+                setTimeout(() => {
+                    notification.style.transform = 'translateY(0)';
+                    notification.style.opacity = '1';
+                }, 10);
+            }
+            
+            notification.textContent = message;
+            
+            // Nach einiger Zeit ausblenden
+            setTimeout(() => {
+                notification.style.transform = 'translateY(20px)';
+                notification.style.opacity = '0';
+                
+                // Und dann entfernen
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+        
+        // Platz verlassen
+        function leaveSeat() {
+            if (currentSeat === null) return;
+            
+            // Platz freigeben
+            tables[currentTable].seats[currentSeat - 1] = null;
+            
+            // Eingabefeld deaktivieren
+            ideaInput.disabled = true;
+            addIdeaButton.disabled = true;
+            
+            // UI aktualisieren
+            showNotification('Du hast deinen Platz verlassen.');
+            currentSeat = null;
+            updateSeats();
+            updatePlayerStatus();
+        }
+        
+        // Spielerstatus aktualisieren
+        function updatePlayerStatus() {
+            const playersList = modalPlayersList;
+            const tableSeats = tables[currentTable].seats;
+            const tableCountSpan = modalTableCount;
+            
+            // Zähle besetzte Plätze
+            const occupiedCount = tableSeats.filter(seat => seat !== null).length;
+            tableCountSpan.textContent = occupiedCount;
+            
+            if (occupiedCount === 0) {
+                playersList.innerHTML = '<i class="fas fa-info-circle"></i> Niemand sitzt an diesem Tisch.';
+                return;
+            }
+            
+            let playersHTML = '<i class="fas fa-users"></i> Spieler am Tisch: ';
+            for (let i = 0; i < tableSeats.length; i++) {
+                if (tableSeats[i]) {
+                    playersHTML += `<span style="font-weight: 600; color: ${playerColor}">${tableSeats[i]}</span> (Platz ${i+1})`;
+                    if (i < tableSeats.length - 1 && tableSeats.slice(i+1).some(s => s !== null)) {
+                        playersHTML += ', ';
+                    }
+                }
+            }
+            playersList.innerHTML = playersHTML;
+        }
+        
+        // Idee hinzufügen
+        addIdeaButton.addEventListener('click', () => {
+            const text = ideaInput.value.trim();
+            if (!text) {
+                showNotification('Bitte gib eine Idee ein.');
+                return;
+            }
+            
+            // Neue Idee erstellen
+            const newIdea = {
+                text: text,
+                author: playerName,
+                votes: 0,
+                timestamp: Date.now()
+            };
+            
+            // Idee zur lokalen Tabelle hinzufügen
+            tables[currentTable].ideas.push(newIdea);
+            
+            // UI aktualisieren
+            renderIdeas();
+            
+            // Eingabefeld leeren
+            ideaInput.value = '';
+            
+            // Benachrichtigung anzeigen
+            showNotification('Neue Idee hinzugefügt!');
+        });
+        
+        // Enter-Taste zum Hinzufügen von Ideen
+        ideaInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !addIdeaButton.disabled) {
+                addIdeaButton.click();
+            }
+        });
+        
+        // Ideen rendern
+        function renderIdeas() {
+            ideasList.innerHTML = '';
+            
+            const ideas = tables[currentTable].ideas;
+            
+            if (ideas.length === 0) {
+                const emptyMessage = document.createElement('li');
+                emptyMessage.innerHTML = '<i class="fas fa-lightbulb" style="color: #ccc; margin-right: 8px;"></i> Noch keine Ideen vorhanden. Sei der Erste!';
+                emptyMessage.style.textAlign = 'center';
+                emptyMessage.style.padding = '25px';
+                emptyMessage.style.color = '#888';
+                ideasList.appendChild(emptyMessage);
+                return;
+            }
+            
+            // Nach Votes sortieren (höchste zuerst), dann nach Zeitstempel (neueste zuerst)
+            const sortedIdeas = [...ideas].sort((a, b) => {
+                if (b.votes !== a.votes) return b.votes - a.votes;
+                return b.timestamp - a.timestamp;
+            });
+            
+            sortedIdeas.forEach((idea, index) => {
+                const li = document.createElement('li');
+                
+                const ideaContent = document.createElement('div');
+                
+                const authorSpan = document.createElement('span');
+                authorSpan.className = 'author';
+                authorSpan.textContent = idea.author + ': ';
+                authorSpan.style.color = playerColor;
+                
+                const ideaText = document.createTextNode(idea.text);
+                
+                const votesSpan = document.createElement('span');
+                votesSpan.className = 'idea-votes';
+                votesSpan.innerHTML = `<i class="fas fa-thumbs-up" style="margin-right: 3px;"></i> ${idea.votes}`;
+                
+                ideaContent.appendChild(authorSpan);
+                ideaContent.appendChild(ideaText);
+                ideaContent.appendChild(votesSpan);
+                
+                li.appendChild(ideaContent);
+                
+                // Aktionsbuttons (nur wenn an einem Platz)
+                if (currentSeat !== null) {
+                    const actionsDiv = document.createElement('div');
+                    actionsDiv.style.display = 'flex';
+                    
+                    // Vote-Button
+                    const voteButton = document.createElement('button');
+                    voteButton.className = 'action-btn vote-btn';
+                    voteButton.innerHTML = '<i class="fas fa-thumbs-up"></i>';
+                    voteButton.title = 'Für diese Idee stimmen';
+                    voteButton.addEventListener('click', () => {
+                        // Idee finden und Stimme hinzufügen
+                        const ideaIndex = ideas.findIndex(i => 
+                            i.text === idea.text && i.author === idea.author && i.timestamp === idea.timestamp);
+                        
+                        if (ideaIndex !== -1) {
+                            ideas[ideaIndex].votes++;
+                            renderIdeas();
+                            showNotification('Du hast für diese Idee gestimmt!');
+                        }
+                    });
+                    actionsDiv.appendChild(voteButton);
+                    
+                    // Lösch-Button (nur für eigene Ideen)
+                    if (idea.author === playerName) {
+                        const deleteButton = document.createElement('button');
+                        deleteButton.className = 'action-btn delete-btn';
+                        deleteButton.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                        deleteButton.title = 'Idee löschen';
+                        deleteButton.addEventListener('click', () => {
+                            // Idee finden und löschen
+                            const ideaIndex = ideas.findIndex(i => 
+                                i.text === idea.text && i.author === idea.author && i.timestamp === idea.timestamp);
+                            
+                            if (ideaIndex !== -1) {
+                                ideas.splice(ideaIndex, 1);
+                                renderIdeas();
+                                showNotification('Idee wurde gelöscht!');
+                            }
+                        });
+                        actionsDiv.appendChild(deleteButton);
+                    }
+                    
+                    li.appendChild(actionsDiv);
+                }
+                
+                ideasList.appendChild(li);
+            });
+        }
+        
+        // Tastatur-Event hinzufügen für E-Taste
+        document.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'e') {
+                activeKeys['e'] = true;
+            }
+            
+            // Escape-Taste zum Schließen des Modals
+            if (e.key === 'Escape' && brainstormModal.style.display === 'flex') {
+                closeModalButton.click();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (e.key.toLowerCase() === 'e') {
+                activeKeys['e'] = false;
+            }
+        });
+        
+        // Klick auf Tisch zum direkten Öffnen (für Mobile-Unterstützung)
+        tableElements.forEach(table => {
+            table.addEventListener('click', () => {
+                const tableId = table.id.replace('table', '');
+                
+                // Prüfen, ob der Spieler nahe genug ist
+                const tableObj = tables[tableId];
+                const dx = playerX - tableObj.x;
+                const dy = playerY - tableObj.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < tableObj.radius + 80) {
+                    openTableModal(parseInt(tableId));
+                }
+            });
+        });
+        
+        // Tisch-Interaktion über Highlight-Zonen
+        document.querySelectorAll('.highlight-zone').forEach(zone => {
+            zone.addEventListener('click', () => {
+                const tableId = zone.id.split('-')[2];
+                
+                // Prüfen, ob der Spieler nahe genug ist
+                const tableObj = tables[tableId];
+                const dx = playerX - tableObj.x;
+                const dy = playerY - tableObj.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < tableObj.radius + 80) {
+                    openTableModal(parseInt(tableId));
+                }
+            });
+        });
+        
+        // Tastendruck für Spielstart (Enter-Taste)
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                startGameButton.click();
+            }
+        });
+    </script>
